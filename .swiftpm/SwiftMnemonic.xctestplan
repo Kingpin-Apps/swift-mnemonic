@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "4846576F-4243-4F1E-83A5-707E1E40159B",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SwiftMnemonicTests",
+        "name" : "SwiftMnemonicTests"
+      }
+    }
+  ],
+  "version" : 1
+}

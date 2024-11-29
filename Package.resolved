@@ -1,0 +1,33 @@
+{
+  "originHash" : "a60b0c0faec7a1f32b7605f5f387be49a5d2a5903df17f09db454e3fac617a39",
+  "pins" : [
+    {
+      "identity" : "base58swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/heckj/Base58Swift.git",
+      "state" : {
+        "revision" : "3ba16c02089401c817b631ffc33ca8f022a41538",
+        "version" : "2.1.15"
+      }
+    },
+    {
+      "identity" : "bigint",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/attaswift/BigInt.git",
+      "state" : {
+        "revision" : "114343a705df4725dfe7ab8a2a326b8883cfd79c",
+        "version" : "5.5.1"
+      }
+    },
+    {
+      "identity" : "uncommoncrypto.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tesseract-one/UncommonCrypto.swift.git",
+      "state" : {
+        "revision" : "075344faec47dadba98bef6a319e310c98be0820",
+        "version" : "0.2.1"
+      }
+    }
+  ],
+  "version" : 3
+}
