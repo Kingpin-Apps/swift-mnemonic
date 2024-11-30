@@ -1,7 +1,8 @@
-## 0.1.2 (2024-11-29)
+## 0.1.3 (2024-11-29)
 
 ### Fix
 
+- add usupported
 - rename hex on Data extension
 
 ## 0.1.1 (2024-11-29)
