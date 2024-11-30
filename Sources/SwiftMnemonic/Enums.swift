@@ -26,8 +26,12 @@ public enum Language: String, Codable, Equatable, CaseIterable {
     case russian
     case spanish
     case turkish
+    case unsupported
 
     public func words() throws -> [String] {
+        if self == .unsupported {
+            throw MnemonicError.unsupportedLanguage("Unsupported language: \(self.rawValue)")
+        }
         guard let filePath = Bundle.module.path(forResource: self.rawValue, ofType: "txt", inDirectory: "wordlist") else {
             throw MnemonicError.fileNotFound("Wordlist file not found: \(self.rawValue).txt")
         }

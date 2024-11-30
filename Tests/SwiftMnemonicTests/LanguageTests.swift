@@ -8,6 +8,10 @@ final class LanguageTests: XCTestCase {
         // Test all cases of the Language enum
         for language in Language.allCases {
             do {
+                if language == .unsupported {
+                    XCTAssertThrowsError(try language.words(), "Unsupported language should throw an error.")
+                    continue
+                }
                 let words = try language.words()
                 XCTAssertFalse(words.isEmpty, "Wordlist for \(language.rawValue) should not be empty.")
                 XCTAssertEqual(words.count, 2048, "Wordlist for \(language.rawValue) should contain exactly 2048 words.")

@@ -9,5 +9,6 @@ public enum MnemonicError: Error, Equatable {
     case invalidStrengthValue(String?)
     case invalidWordlistLength(String?)
     case languageNotDetected(String?)
+    case unsupportedLanguage(String?)
     case wordNotFound(String?)
 }

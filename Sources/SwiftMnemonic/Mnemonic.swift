@@ -41,7 +41,9 @@ public struct Mnemonic: Equatable, Hashable {
     }
 
     public func listLanguages() -> [String] {
-        return Language.allCases.map { $0.rawValue }
+        return Language.allCases
+            .filter { $0 != .unsupported }
+            .map { $0.rawValue }
     }
 
     public static func normalizeString(_ txt: String) -> String {
