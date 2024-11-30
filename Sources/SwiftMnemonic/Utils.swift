@@ -2,9 +2,9 @@ import Foundation
 import Base58Swift
 
 public extension Data {
-    init(hex: String) {
+    init(fromHex: String) {
         self.init()
-        var hex = hex
+        var hex = fromHex
         while hex.count > 0 {
             let c = String(hex.prefix(2))
             hex = String(hex.dropFirst(2))
