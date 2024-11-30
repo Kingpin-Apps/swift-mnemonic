@@ -6,7 +6,7 @@ class MnemonicTests: XCTestCase {
     func checkList(language: Language, vectors: [[String]]) throws {
         let mnemonic = try Mnemonic(language: language)
         for v in vectors {
-            let entropy = Data(hex: v[0])
+            let entropy = Data(fromHex: v[0])
             let code = try mnemonic.toMnemonicString(entropy: entropy)
             let seed = try Mnemonic.toSeed(mnemonic: code, passphrase: "TREZOR")
             let xprv = try Mnemonic.toHDMasterKey(seed: seed)
