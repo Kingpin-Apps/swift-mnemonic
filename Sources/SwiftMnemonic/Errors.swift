@@ -1,6 +1,6 @@
 import Foundation
 
-public enum MnemonicError: Error {
+public enum MnemonicError: Error, Equatable {
     case failedChecksum(String?)
     case fileNotFound(String?)
     case fileLoadFail(String?)

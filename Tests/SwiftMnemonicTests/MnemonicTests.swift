@@ -118,4 +118,56 @@ class MnemonicTests: XCTestCase {
         XCTAssertEqual(mnemonic.expand(mnemonic: "access"), "access")
         XCTAssertEqual(mnemonic.expand(mnemonic: "access acce acb acc act acti"), "access access acb acc act action")
     }
+    
+    func testGenerateValidStrengths() {
+        do {
+            for wordCount in WordCount.allCases {
+                let mnemonic = try Mnemonic(language: .english)
+                let phrase = try mnemonic.generate(wordCount: wordCount)
+                
+                // Verify the phrase has the expected word count
+                XCTAssertEqual(
+                    phrase.count,
+                    wordCount.rawValue,
+                    "Expected \(wordCount.rawValue) words for count \(wordCount), but got \(phrase.count)."
+                )
+            }
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func testGenerateEntropyRandomness() {
+        do {
+            let mnemonic = try Mnemonic(language: .english)
+            let phrase1 = try mnemonic.generate()
+            let phrase2 = try mnemonic.generate()
+            
+            // Ensure the two generated phrases are not identical
+            XCTAssertNotEqual(phrase1, phrase2, "Generated mnemonic phrases should be different for different random entropy.")
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func testGenerateWithDifferentLanguages() {
+        let languages: [Language] = [.english, .japanese, .french, .spanish]
+        
+        do {
+            for language in languages {
+                let mnemonic = try Mnemonic(language: language)
+                let phrase = try mnemonic.generate()
+                
+                // Verify the phrase has the correct word count
+                XCTAssertEqual(phrase.count, 12, "Expected 12 words for strength 128, but got \(phrase.count).")
+                
+                // Verify the phrase contains words from the specified language
+                for word in phrase {
+                    XCTAssertTrue(mnemonic.wordlist.contains(word), "Word \(word) not found in \(language.rawValue) wordlist.")
+                }
+            }
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
 }

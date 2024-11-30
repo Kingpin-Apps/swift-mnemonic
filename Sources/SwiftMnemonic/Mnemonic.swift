@@ -81,11 +81,8 @@ public struct Mnemonic: Equatable, Hashable {
         throw MnemonicError.languageNotDetected("Language not detected for code: \(code)")
     }
 
-    public func generate(strength: Int = 128) throws -> [String] {
-        guard [128, 160, 192, 224, 256].contains(strength) else {
-            throw MnemonicError.invalidStrengthValue("Invalid strength value: \(strength)")
-        }
-        let entropy = Data((0..<strength / 8).map { _ in UInt8.random(in: 0...255) })
+    public func generate(wordCount: WordCount = .twelve) throws -> [String] {
+        let entropy = Data((0..<wordCount.strength / 8).map { _ in UInt8.random(in: 0...255) })
         return try toMnemonic(entropy: entropy)
     }
 
