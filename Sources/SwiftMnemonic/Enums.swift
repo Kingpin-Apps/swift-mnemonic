@@ -1,5 +1,17 @@
 import Foundation
 
+public enum WordCount: Int, Codable, Equatable, CaseIterable {
+    case twelve = 12
+    case fifteen = 15
+    case eighteen = 18
+    case twentyOne = 21
+    case twentyFour = 24
+    
+    public var strength: Int {
+        return (self.rawValue / 3) * 32
+    }
+}
+
 
 public enum Language: String, Codable, Equatable, CaseIterable {
     case chinese_simplified
