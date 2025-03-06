@@ -1,4 +1,6 @@
 ![GitHub Workflow Status](https://github.com/Kingpin-Apps/swift-mnemonic/actions/workflows/swift.yml/badge.svg)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FKingpin-Apps%2Fswift-mnemonic%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Kingpin-Apps/swift-mnemonic)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FKingpin-Apps%2Fswift-mnemonic%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Kingpin-Apps/swift-mnemonic)
 
 # SwiftMnemonic - Reference implementation of BIP-0039: Mnemonic code for generating deterministic keys
 

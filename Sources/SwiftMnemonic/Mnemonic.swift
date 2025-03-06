@@ -1,17 +1,12 @@
 import Foundation
 import UncommonCrypto
 
-public struct Mnemonic: Equatable, Hashable {
-    /*
-        Generates a mnemonic phrase in the specified language.
-     
-        - Parameters:
-            language: The language to generate the mnemonic in. Defaults to English.
-            wordlist: A custom wordlist to use for the mnemonic. Defaults to the language's wordlist.
-     
-        - Throws: An error if the wordlist is not the correct length.
-     */
-    
+/// Generates a mnemonic phrase in the specified language.
+/// - Parameters:
+///  - language: The language to generate the mnemonic in. Defaults to English.
+///  - wordlist: A custom wordlist to use for the mnemonic. Defaults to the language's wordlist.
+/// - Throws: An error if the wordlist is not the correct length.
+public struct Mnemonic: Equatable, Hashable {    
     /// The number of words in the wordlist.
     let radix = 2048
     
