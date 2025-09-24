@@ -1,22 +1,22 @@
 {
-  "originHash" : "a60b0c0faec7a1f32b7605f5f387be49a5d2a5903df17f09db454e3fac617a39",
+  "originHash" : "2c82dd6c5797caa3365f31d134819d581adc47f1c9270a8b4cf21ac21e91e843",
   "pins" : [
-    {
-      "identity" : "base58swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/heckj/Base58Swift.git",
-      "state" : {
-        "revision" : "3ba16c02089401c817b631ffc33ca8f022a41538",
-        "version" : "2.1.15"
-      }
-    },
     {
       "identity" : "bigint",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/attaswift/BigInt.git",
       "state" : {
-        "revision" : "114343a705df4725dfe7ab8a2a326b8883cfd79c",
-        "version" : "5.5.1"
+        "revision" : "0ed110f7555c34ff468e72e1686e59721f2b0da6",
+        "version" : "5.3.0"
+      }
+    },
+    {
+      "identity" : "swift-base58",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KINGH242/swift-base58.git",
+      "state" : {
+        "revision" : "11895c76d852eed7f96c5108de70d928bd02208b",
+        "version" : "0.1.0"
       }
     },
     {

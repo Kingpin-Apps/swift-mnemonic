@@ -18,9 +18,8 @@ let package = Package(
             targets: ["SwiftMnemonic"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tesseract-one/UncommonCrypto.swift.git",
-                 .upToNextMinor(from: "0.2.0")),
-        .package(url: "https://github.com/heckj/Base58Swift.git", from: "2.1.0")
+        .package(url: "https://github.com/tesseract-one/UncommonCrypto.swift.git", .upToNextMinor(from: "0.2.1")),
+        .package(url: "https://github.com/KINGH242/swift-base58.git", from: "0.1.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -29,7 +28,7 @@ let package = Package(
             name: "SwiftMnemonic",
             dependencies: [
                 .product(name: "UncommonCrypto", package: "UncommonCrypto.swift"),
-                .product(name: "Base58Swift", package: "Base58Swift")
+                .product(name: "SwiftBase58", package: "swift-base58")
             ],
             resources: [
                .copy("wordlist")
