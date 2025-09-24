@@ -1,5 +1,7 @@
 import Foundation
 
+/// Errors that can be thrown by the Mnemonic module.
+/// - Note: All error cases have an associated string message for additional context.
 public enum MnemonicError: Error, Equatable {
     case failedChecksum(String?)
     case fileNotFound(String?)
