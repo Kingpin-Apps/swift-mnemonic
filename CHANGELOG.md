@@ -1,3 +1,9 @@
+## 0.1.4 (2025-09-23)
+
+### Fix
+
+- use swift-base58 for linux support
+
 ## 0.1.3 (2024-11-29)
 
 ### Fix
