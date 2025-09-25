@@ -1,3 +1,9 @@
+## 0.1.5 (2025-09-25)
+
+### Fix
+
+- update to latest swift-base58
+
 ## 0.1.4 (2025-09-23)
 
 ### Fix
