@@ -19,7 +19,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/tesseract-one/UncommonCrypto.swift.git", .upToNextMinor(from: "0.2.1")),
-        .package(url: "https://github.com/KINGH242/swift-base58.git", from: "0.1.0")
+        .package(url: "https://github.com/KINGH242/swift-base58.git", from: "0.1.2")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
