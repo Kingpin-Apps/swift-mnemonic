@@ -1,3 +1,9 @@
+## 0.2.0 (2025-09-26)
+
+### Feat
+
+- update API and docs for better dev ex
+
 ## 0.1.5 (2025-09-25)
 
 ### Fix
