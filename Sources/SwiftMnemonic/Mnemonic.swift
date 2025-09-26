@@ -38,30 +38,30 @@ import UncommonCrypto
 ///   compatibility with other BIP-39 compliant wallet implementations.
 public struct Mnemonic: Equatable, Hashable, Sendable {
     /// The number of words in the wordlist (always 2048 for BIP-39 compliance).
-    let radix = 2048
+    public let radix = 2048
     
     /// The language used for the mnemonic phrase.
     ///
     /// This determines which wordlist is used and affects the delimiter for joining words.
     /// Japanese uses a full-width space (\u{3000}), while other languages use a regular space.
-    let language: Language
+    public let language: Language
     
     /// The wordlist used for encoding and decoding mnemonic phrases.
     ///
     /// Contains exactly 2048 words as specified by BIP-39. Each word corresponds to
     /// an 11-bit index used in mnemonic encoding.
-    let wordlist: [String]
+    public let wordlist: [String]
     
     /// The delimiter used when joining mnemonic words into a string.
     ///
     /// - Returns: `"\u{3000}"` (full-width space) for Japanese, `" "` (space) for all other languages.
-    let delimiter: String
+    public let delimiter: String
     
     /// The entropy data used to generate the mnemonic phrase.
     ///
     /// This is the raw cryptographic entropy that the mnemonic represents.
     /// Must be 128, 160, 192, 224, or 256 bits (16, 20, 24, 28, or 32 bytes).
-    let entropy: Data
+    public let entropy: Data
     
     /// The mnemonic phrase as an array of words.
     ///
@@ -78,7 +78,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
     /// let mnemonic = try Mnemonic(language: .english, wordCount: .twelve)
     /// print(mnemonic.phrase) // ["word1", "word2", ..., "word12"]
     /// ```
-    var phrase: [String] {
+    public var phrase: [String] {
         return try! Self.toMnemonic(entropy: entropy, wordlist: wordlist)
     }
 
