@@ -1,6 +1,23 @@
 import Foundation
 
-/// Enum representing the number of words in a mnemonic phrase.
+/// Represents the supported word counts for mnemonic phrases and their corresponding entropy strength.
+///
+/// Each word count corresponds to a specific entropy strength as defined by BIP-39:
+/// - `.twelve`: 12 words → 128 bits of entropy (16 bytes)
+/// - `.fifteen`: 15 words → 160 bits of entropy (20 bytes)
+/// - `.eighteen`: 18 words → 192 bits of entropy (24 bytes)
+/// - `.twentyOne`: 21 words → 224 bits of entropy (28 bytes)
+/// - `.twentyFour`: 24 words → 256 bits of entropy (32 bytes)
+///
+/// ## Example
+///
+/// ```swift
+/// // Generate a mnemonic with specific word count
+/// let mnemonic = try Mnemonic(language: .english, wordCount: .twentyFour)
+/// 
+/// // Get entropy strength in bits
+/// let bits = WordCount.twentyFour.strength // 256
+/// ```
 public enum WordCount: Int, Codable, Equatable, CaseIterable {
     case twelve = 12
     case fifteen = 15
@@ -16,8 +33,24 @@ public enum WordCount: Int, Codable, Equatable, CaseIterable {
     }
 }
 
-/// Enum representing supported languages for mnemonic phrases.
-public enum Language: String, Codable, Equatable, CaseIterable {
+/// Represents supported languages for BIP-39 mnemonic phrases.
+///
+/// This enum covers all 12 languages officially supported by BIP-39:
+/// - `english`: The default language for most cryptocurrency applications
+/// - `chinese_simplified`, `chinese_traditional`: Chinese variants
+/// - `japanese`: Uses special full-width space (\u{3000}) as delimiter
+/// - Other languages: `czech`, `french`, `italian`, `korean`, `portuguese`, `russian`, `spanish`, `turkish`
+///
+/// ## Example Usage
+///
+/// ```swift
+/// // List all supported languages
+/// let languages = Language.allCases.filter { $0 != .unsupported }
+///
+/// // Create mnemonic in specific language
+/// let mnemonic = try Mnemonic(language: .japanese)
+/// ```
+public enum Language: String, Codable, Equatable, CaseIterable, Sendable {
     case chinese_simplified
     case chinese_traditional
     case czech
@@ -32,9 +65,27 @@ public enum Language: String, Codable, Equatable, CaseIterable {
     case turkish
     case unsupported
 
-    /// Load the wordlist for the specified language.
-    /// - Throws: `MnemonicError` if the language is unsupported or if the wordlist file cannot be found or loaded.
-    /// - Returns: An array of words in the specified language.
+    /// Loads the BIP-39 wordlist for this language.
+    ///
+    /// Each language has exactly 2048 words as defined by the BIP-39 specification.
+    /// The words are loaded from embedded text files within the bundle.
+    ///
+    /// ## Example Usage
+    ///
+    /// ```swift
+    /// let englishWords = try Language.english.words()
+    /// print(englishWords.count) // 2048
+    /// print(englishWords[0])    // "abandon"
+    /// 
+    /// let japaneseWords = try Language.japanese.words()
+    /// // Japanese wordlist contains hiragana characters
+    /// ```
+    ///
+    /// - Returns: An array of exactly 2048 words in the specified language.
+    /// - Throws: 
+    ///   - `MnemonicError.unsupportedLanguage`: If called on `.unsupported`.
+    ///   - `MnemonicError.fileNotFound`: If the wordlist file is missing from the bundle.
+    ///   - `MnemonicError.fileLoadFail`: If the wordlist file cannot be read.
     public func words() throws -> [String] {
         if self == .unsupported {
             throw MnemonicError.unsupportedLanguage("Unsupported language: \(self.rawValue)")

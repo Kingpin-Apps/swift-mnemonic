@@ -49,19 +49,18 @@ struct MnemonicTests {
     
     @Test
     func testDetection() throws {
-        let mnemonic = try Mnemonic(language: .english)
-        #expect(try mnemonic.detectLanguage(code: "security") == .english)
-        #expect(try mnemonic.detectLanguage(code: "fruit wave dwarf") == .english)
-        #expect(try mnemonic.detectLanguage(code: "fru wago dw") == .english)
-        #expect(try mnemonic.detectLanguage(code: "fru wago dur enje") == .french)
+        #expect(try Mnemonic.detectLanguage(phrase: "security") == .english)
+        #expect(try Mnemonic.detectLanguage(phrase: "fruit wave dwarf") == .english)
+        #expect(try Mnemonic.detectLanguage(phrase: "fru wago dw") == .english)
+        #expect(try Mnemonic.detectLanguage(phrase: "fru wago dur enje") == .french)
         
-        #expect(throws: MnemonicError.self) { _ = try mnemonic.detectLanguage(code: "jaguar xxxxxxx") }
-        #expect(throws: MnemonicError.self) { _ = try mnemonic.detectLanguage(code: "jaguar jaguar") }
+        #expect(throws: MnemonicError.self) { _ = try Mnemonic.detectLanguage(phrase: "jaguar xxxxxxx") }
+        #expect(throws: MnemonicError.self) { _ = try Mnemonic.detectLanguage(phrase: "jaguar jaguar") }
         
-        #expect(try mnemonic.detectLanguage(code: "jaguar security") == .english)
-        #expect(try mnemonic.detectLanguage(code: "jaguar aboyer") == .french)
-        #expect(try mnemonic.detectLanguage(code: "abandon about") == .english)
-        #expect(try mnemonic.detectLanguage(code: "abandon aboutir") == .french)
+        #expect(try Mnemonic.detectLanguage(phrase: "jaguar security") == .english)
+        #expect(try Mnemonic.detectLanguage(phrase: "jaguar aboyer") == .french)
+        #expect(try Mnemonic.detectLanguage(phrase: "abandon about") == .english)
+        #expect(try Mnemonic.detectLanguage(phrase: "abandon aboutir") == .french)
     }
     
     @Test
@@ -103,8 +102,8 @@ struct MnemonicTests {
         let mnemonic = try Mnemonic(language: .english)
         for _ in 0..<1024 {
             let entropy = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
-            let phrase = try mnemonic.toMnemonic(entropy: entropy)
-            let recoveredEntropy = try mnemonic.toEntropy(phrase, wordlist: mnemonic.wordlist)
+            let phrase = try Mnemonic.toMnemonic(entropy: entropy, wordlist: mnemonic.wordlist)
+            let recoveredEntropy = try Mnemonic.toEntropy(phrase, wordlist: mnemonic.wordlist)
             #expect(entropy == Data(recoveredEntropy))
         }
     }
@@ -169,5 +168,193 @@ struct MnemonicTests {
                 #expect(mnemonic.wordlist.contains(word), "Word \(word) not found in \(language.rawValue) wordlist.")
             }
         }
+    }
+    
+    @Test("Test phrase computed property")
+    func testPhraseComputedProperty() throws {
+        let entropy = TestConstants.validEntropy16
+        let mnemonic = try Mnemonic(language: .english, entropy: entropy)
+        let expectedPhrase = try Mnemonic.toMnemonic(entropy: entropy, wordlist: mnemonic.wordlist)
+        
+        #expect(mnemonic.phrase == expectedPhrase, "Computed phrase should match expected phrase")
+    }
+    
+    @Test("Test initialization with custom wordlist")
+    func testInitializationWithCustomWordlist() throws {
+        let customWordlist = TestConstants.createValidWordlist()
+        let mnemonic = try Mnemonic(language: .english, wordlist: customWordlist)
+        
+        #expect(mnemonic.wordlist == customWordlist, "Custom wordlist should be used")
+    }
+    
+    @Test("Test invalid wordlist length error")
+    func testInvalidWordlistLengthError() {
+        let invalidWordlist = TestConstants.createInvalidWordlist()
+        
+        #expect(throws: MnemonicError.self) {
+            _ = try Mnemonic(language: .english, wordlist: invalidWordlist)
+        }
+    }
+    
+    @Test("Test entropy initialization path")
+    func testEntropyInitializationPath() throws {
+        let originalEntropy = TestConstants.validEntropy32
+        let mnemonic = try Mnemonic(language: .english, entropy: originalEntropy)
+        
+        let phrase = mnemonic.phrase
+        let recoveredEntropy = try Mnemonic.toEntropy(phrase, wordlist: mnemonic.wordlist)
+        
+        #expect(originalEntropy == recoveredEntropy, "Entropy should be recoverable from phrase")
+    }
+    
+    @Test("Test init from mnemonic with valid input")
+    func testInitFromMnemonicValidInput() throws {
+        let validMnemonic = TestConstants.validMnemonic12
+        let mnemonic = try Mnemonic(from: validMnemonic)
+        
+        // Verify the mnemonic was created successfully
+        #expect(mnemonic.wordlist.count == 2048, "Should use standard wordlist")
+    }
+    
+    @Test("Test init from mnemonic with invalid input")
+    func testInitFromMnemonicInvalidInput() {
+        let invalidMnemonic = ["invalid", "words", "that", "dont", "exist", "in", "any", "wordlist", "at", "all", "for", "sure"]
+        
+        #expect(throws: MnemonicError.self) {
+            _ = try Mnemonic(from: invalidMnemonic)
+        }
+    }
+    
+    @Test("Test invalid entropy length errors")
+    func testInvalidEntropyLengthErrors() {
+        let invalidEntropies = [
+            TestConstants.invalidEntropy15,  // 15 bytes
+            TestConstants.invalidEntropy33   // 33 bytes
+        ]
+        
+        for invalidEntropy in invalidEntropies {
+            #expect(throws: MnemonicError.self) {
+                _ = try Mnemonic(language: .english, entropy: invalidEntropy)
+            }
+        }
+    }
+    
+    @Test("Test toEntropy with invalid phrase length")
+    func testToEntropyInvalidPhraseLength() throws {
+        let mnemonic = try Mnemonic(language: .english)
+        let invalidPhrases = [
+            TestConstants.invalidMnemonic11,  // 11 words
+            TestConstants.invalidMnemonic13   // 13 words
+        ]
+        
+        for invalidPhrase in invalidPhrases {
+            #expect(throws: MnemonicError.self) {
+                _ = try Mnemonic.toEntropy(invalidPhrase, wordlist: mnemonic.wordlist)
+            }
+        }
+    }
+    
+    @Test("Test toEntropy with word not in wordlist")
+    func testToEntropyWordNotFound() throws {
+        let mnemonic = try Mnemonic(language: .english)
+        let phraseWithInvalidWord = ["abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "abandon", "invalidword"]
+        
+        #expect(throws: MnemonicError.self) {
+            _ = try Mnemonic.toEntropy(phraseWithInvalidWord, wordlist: mnemonic.wordlist)
+        }
+    }
+    
+    @Test("Test calculateChecksumBits with invalid entropy")
+    func testCalculateChecksumBitsInvalidEntropy() {
+        let invalidEntropies = [
+            Data(),  // Empty
+            Data([0x01, 0x02, 0x03]),  // 3 bytes (not multiple of 4)
+            Data(Array(0x00...0x21))  // 34 bytes (> 32)
+        ]
+        
+        for invalidEntropy in invalidEntropies {
+            #expect(throws: MnemonicError.self) {
+                _ = try Mnemonic.calculateChecksumBits(invalidEntropy)
+            }
+        }
+    }
+    
+    @Test("Test toMnemonic with invalid entropy length")
+    func testToMnemonicInvalidEntropyLength() throws {
+        let mnemonic = try Mnemonic(language: .english)
+        let invalidEntropy = Data([0x01, 0x02, 0x03, 0x04, 0x05])  // 5 bytes
+        
+        #expect(throws: MnemonicError.self) {
+            _ = try Mnemonic.toMnemonic(entropy: invalidEntropy, wordlist: mnemonic.wordlist)
+        }
+    }
+    
+    @Test("Test check mnemonic with invalid phrase length")
+    func testCheckMnemonicInvalidPhraseLength() throws {
+        let mnemonic = try Mnemonic(language: .english)
+        let invalidPhrase = "word1 word2 word3 word4 word5"  // 5 words
+        
+        let result = try mnemonic.check(mnemonic: invalidPhrase)
+        #expect(result == false, "Invalid phrase length should return false")
+    }
+    
+    @Test("Test toHDMasterKey with invalid seed length")
+    func testToHDMasterKeyInvalidSeedLength() {
+        let invalidSeed = Data(Array(0x00..<0x3F))  // 63 bytes instead of 64
+        
+        #expect(throws: MnemonicError.self) {
+            _ = try Mnemonic.toHDMasterKey(seed: invalidSeed)
+        }
+    }
+    
+    @Test("Test toHDMasterKey with testnet flag")
+    func testToHDMasterKeyTestnet() throws {
+        let validSeed = Data(Array(0x00..<0x40))  // 64 bytes
+        let mainnetKey = try Mnemonic.toHDMasterKey(seed: validSeed, testnet: false)
+        let testnetKey = try Mnemonic.toHDMasterKey(seed: validSeed, testnet: true)
+        
+        #expect(mainnetKey != testnetKey, "Mainnet and testnet keys should be different")
+    }
+    
+    @Test("Test Japanese delimiter")
+    func testJapaneseDelimiter() throws {
+        let mnemonic = try Mnemonic(language: .japanese)
+        #expect(mnemonic.delimiter == "\u{3000}", "Japanese should use ideographic space delimiter")
+        
+        let entropy = TestConstants.validEntropy16
+        let phrase = try mnemonic.toMnemonicString(entropy: entropy)
+        #expect(phrase.contains("\u{3000}"), "Japanese mnemonic string should contain ideographic space")
+    }
+    
+    @Test("Test non-Japanese delimiter")
+    func testNonJapaneseDelimiter() throws {
+        let languages: [Language] = [.english, .french, .spanish, .chinese_simplified]
+        
+        for language in languages {
+            let mnemonic = try Mnemonic(language: language)
+            #expect(mnemonic.delimiter == " ", "\(language.rawValue) should use regular space delimiter")
+        }
+    }
+    
+    @Test("Test Mnemonic Equatable")
+    func testMnemonicEquatable() throws {
+        let entropy = TestConstants.validEntropy16
+        let mnemonic1 = try Mnemonic(language: .english, entropy: entropy)
+        let mnemonic2 = try Mnemonic(language: .english, entropy: entropy)
+        let mnemonic3 = try Mnemonic(language: .french, entropy: entropy)
+        
+        #expect(mnemonic1 == mnemonic2, "Mnemonics with same parameters should be equal")
+        #expect(mnemonic1 != mnemonic3, "Mnemonics with different languages should not be equal")
+    }
+    
+    @Test("Test Mnemonic Hashable")
+    func testMnemonicHashable() throws {
+        let entropy1 = TestConstants.validEntropy16
+        let entropy2 = TestConstants.validEntropy32
+        let mnemonic1 = try Mnemonic(language: .english, entropy: entropy1)
+        let mnemonic2 = try Mnemonic(language: .english, entropy: entropy2)
+        
+        let set = Set([mnemonic1, mnemonic2])
+        #expect(set.count == 2, "Different mnemonics should have different hash values")
     }
 }

@@ -22,18 +22,24 @@ SwiftMnemonic provides a complete implementation of BIP-39 (Mnemonic code for ge
 ```swift
 import SwiftMnemonic
 
-// Create a mnemonic generator
-let mnemonic = try Mnemonic(language: .english)
+// Create a mnemonic with random 24-word phrase
+let mnemonic = try Mnemonic(language: .english, wordCount: .twentyFour)
+print("Generated mnemonic: \(mnemonic.phrase.joined(separator: " "))")
 
-// Generate a 24-word mnemonic phrase
-let phrase = try mnemonic.generate(wordCount: .twentyFour)
-print("Generated mnemonic: \(phrase.joined(separator: " "))")
+// Create from existing entropy
+let entropy = Data(repeating: 0x42, count: 16) // 128-bit entropy for 12 words
+let entropyMnemonic = try Mnemonic(language: .english, entropy: entropy)
+
+// Restore from existing mnemonic phrase
+let words = ["abandon", "abandon", "abandon", "abandon", "abandon", "abandon",
+             "abandon", "abandon", "abandon", "abandon", "abandon", "about"]
+let restoredMnemonic = try Mnemonic(from: words)
 
 // Validate a mnemonic
-let isValid = try mnemonic.check(mnemonic: phrase.joined(separator: " "))
+let isValid = try mnemonic.check(mnemonic: mnemonic.phrase.joined(separator: " "))
 
 // Derive seed for wallet
-let seed = try Mnemonic.toSeed(mnemonic: phrase.joined(separator: " "))
+let seed = try Mnemonic.toSeed(mnemonic: mnemonic.phrase.joined(separator: " "))
 ```
 
 ## Topics
@@ -57,10 +63,8 @@ let seed = try Mnemonic.toSeed(mnemonic: phrase.joined(separator: " "))
 - <doc:EntropyConversion>
 - <doc:LanguageDetection>
 - <doc:WordExpansion>
-- <doc:CustomWordlists>
 
 ### Security and Best Practices
 
 - <doc:SecurityConsiderations>
 - <doc:ErrorHandling>
-- <doc:TestingAndValidation>
