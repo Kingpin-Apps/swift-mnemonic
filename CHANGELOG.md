@@ -1,3 +1,9 @@
+## 0.2.2 (2026-04-11)
+
+### Fix
+
+- use embedInCode for wordlists
+
 ## 0.2.1 (2025-09-26)
 
 ### Fix
