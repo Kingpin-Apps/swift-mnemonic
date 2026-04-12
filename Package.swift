@@ -31,8 +31,19 @@ let package = Package(
                 .product(name: "SwiftBase58", package: "swift-base58")
             ],
             resources: [
-               .copy("wordlist")
-           ]
+                .embedInCode("wordlist/chinese_simplified.txt"),
+                .embedInCode("wordlist/chinese_traditional.txt"),
+                .embedInCode("wordlist/czech.txt"),
+                .embedInCode("wordlist/english.txt"),
+                .embedInCode("wordlist/french.txt"),
+                .embedInCode("wordlist/italian.txt"),
+                .embedInCode("wordlist/japanese.txt"),
+                .embedInCode("wordlist/korean.txt"),
+                .embedInCode("wordlist/portuguese.txt"),
+                .embedInCode("wordlist/russian.txt"),
+                .embedInCode("wordlist/spanish.txt"),
+                .embedInCode("wordlist/turkish.txt"),
+            ]
         ),
         .testTarget(
             name: "SwiftMnemonicTests",

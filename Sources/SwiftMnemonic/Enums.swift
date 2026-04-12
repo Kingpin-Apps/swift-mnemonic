@@ -90,10 +90,24 @@ public enum Language: String, Codable, Equatable, CaseIterable, Sendable {
         if self == .unsupported {
             throw MnemonicError.unsupportedLanguage("Unsupported language: \(self.rawValue)")
         }
-        guard let filePath = Bundle.module.path(forResource: self.rawValue, ofType: "txt", inDirectory: "wordlist") else {
-            throw MnemonicError.fileNotFound("Wordlist file not found: \(self.rawValue).txt")
+        let bytes: [UInt8]
+        switch self {
+            case .chinese_simplified:  bytes = PackageResources.chinese_simplified_txt
+            case .chinese_traditional: bytes = PackageResources.chinese_traditional_txt
+            case .czech:               bytes = PackageResources.czech_txt
+            case .english:             bytes = PackageResources.english_txt
+            case .french:              bytes = PackageResources.french_txt
+            case .italian:             bytes = PackageResources.italian_txt
+            case .japanese:            bytes = PackageResources.japanese_txt
+            case .korean:              bytes = PackageResources.korean_txt
+            case .portuguese:          bytes = PackageResources.portuguese_txt
+            case .russian:             bytes = PackageResources.russian_txt
+            case .spanish:             bytes = PackageResources.spanish_txt
+            case .turkish:             bytes = PackageResources.turkish_txt
+            case .unsupported:
+                throw MnemonicError.fileNotFound("Wordlist file not found: \(self.rawValue).txt")
         }
-        guard let content = try? String(contentsOfFile: filePath, encoding: .utf8) else {
+        guard let content = String(bytes: bytes, encoding: .utf8) else {
             throw MnemonicError.fileLoadFail("Failed to load wordlist for \(self.rawValue)")
         }
         return content.components(separatedBy: .newlines).filter { !$0.isEmpty }
