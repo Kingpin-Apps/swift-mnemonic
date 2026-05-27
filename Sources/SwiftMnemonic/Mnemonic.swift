@@ -1,6 +1,5 @@
 import Foundation
 import Crypto
-import _CryptoExtras
 
 /// A BIP-39 compliant mnemonic phrase generator and validator.
 ///
@@ -474,18 +473,14 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
         let normalizedPassphrase = normalizeString(passphrase)
         let salt = bip39SaltPrefix + normalizedPassphrase
 
-        // `unsafeUncheckedRounds` is required because BIP-39's 2048 rounds is below
-        // swift-crypto's recommended minimum of 210,000 — this iteration count is
-        // dictated by the spec and is not configurable.
-        let derivedKey = try KDF.Insecure.PBKDF2.deriveKey(
-            from: Array(normalizedMnemonic.utf8),
+        let derivedKey = PBKDF2.deriveKeyHMACSHA512(
+            password: Array(normalizedMnemonic.utf8),
             salt: Array(salt.utf8),
-            using: .sha512,
-            outputByteCount: bip39SeedByteCount,
-            unsafeUncheckedRounds: bip39PBKDF2Rounds
+            iterations: bip39PBKDF2Rounds,
+            keyLength: bip39SeedByteCount
         )
 
-        return derivedKey.withUnsafeBytes { Data($0) }
+        return Data(derivedKey)
     }
 
     /// Derives a Base58Check-encoded extended private key (xprv/tprv) from a 64-byte seed.

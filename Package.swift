@@ -28,7 +28,6 @@ let package = Package(
             name: "SwiftMnemonic",
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto"),
-                .product(name: "_CryptoExtras", package: "swift-crypto"),
                 .product(name: "SwiftBase58", package: "swift-base58")
             ],
             resources: [
