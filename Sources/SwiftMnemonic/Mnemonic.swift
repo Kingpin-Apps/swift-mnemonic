@@ -1,5 +1,6 @@
 import Foundation
-import UncommonCrypto
+import Crypto
+import _CryptoExtras
 
 /// A BIP-39 compliant mnemonic phrase generator and validator.
 ///
@@ -39,6 +40,27 @@ import UncommonCrypto
 public struct Mnemonic: Equatable, Hashable, Sendable {
     /// The number of words in the wordlist (always 2048 for BIP-39 compliance).
     public let radix = 2048
+
+    /// PBKDF2 salt prefix mandated by BIP-39 ("From mnemonic to seed"):
+    /// salt = "mnemonic" + passphrase (UTF-8 NFKD).
+    /// https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed
+    private static let bip39SaltPrefix = "mnemonic"
+
+    /// PBKDF2 iteration count mandated by BIP-39 for seed derivation.
+    private static let bip39PBKDF2Rounds = 2048
+
+    /// PBKDF2 output length in bytes mandated by BIP-39 (512-bit seed).
+    private static let bip39SeedByteCount = 64
+
+    /// HMAC-SHA512 key mandated by BIP-32 for master key generation:
+    /// I = HMAC-SHA512(Key = "Bitcoin seed", Data = S).
+    /// https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#master-key-generation
+    private static let bip32MasterKeyHMACKey = "Bitcoin seed"
+
+    /// BIP-32 serialization version bytes for extended private keys.
+    /// https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+    private static let bip32MainnetPrivateVersion = Data([0x04, 0x88, 0xad, 0xe4]) // xprv
+    private static let bip32TestnetPrivateVersion = Data([0x04, 0x35, 0x83, 0x94]) // tprv
     
     /// The language used for the mnemonic phrase.
     ///
@@ -142,7 +164,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
             }
             self.entropy = entropy
         } else {
-            self.entropy = Data(try SecureRandom.bytes(size: wordCount.strength / 8))
+            self.entropy = Mnemonic.randomBytes(count: wordCount.strength / 8)
         }
     }
     
@@ -234,8 +256,16 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
     /// - Returns: The generated mnemonic as an array of words.
     /// - Throws: An error if generation fails.
     public func generate(wordCount: WordCount = .twelve) throws -> [String] {
-        let entropy = try SecureRandom.bytes(size: wordCount.strength / 8)
-        return try Self.toMnemonic(entropy: Data(entropy), wordlist: wordlist)
+        let entropy = Mnemonic.randomBytes(count: wordCount.strength / 8)
+        return try Self.toMnemonic(entropy: entropy, wordlist: wordlist)
+    }
+
+    /// Generates cryptographically secure random bytes using swift-crypto's
+    /// platform CSPRNG (SecRandomCopyBytes on Apple, getentropy/getrandom on
+    /// Linux/Android, wasi random_get on WASI, BCryptGenRandom on Windows).
+    private static func randomBytes(count: Int) -> Data {
+        let key = SymmetricKey(size: SymmetricKeySize(bitCount: count * 8))
+        return key.withUnsafeBytes { Data($0) }
     }
 
     /// Converts a mnemonic phrase into its underlying entropy.
@@ -280,8 +310,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
         }
 
         // Compute the checksum from the entropy
-        let hash = SHA2.hash(type: .sha256, bytes: entropy)
-        let hashBytes = Array(hash) // Convert SHA256.Digest to an Array of bytes
+        let hashBytes = Array(SHA256.hash(data: Data(entropy)))
         let hashBits = (0..<8).map { (hashBytes[0] >> (7 - $0)) & 1 == 1 }
 
         // Validate the checksum
@@ -325,7 +354,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
         }
         
         let size = entropy.count / 4 // Calculate checksum size.
-        let hash = SHA2.hash(type: .sha256, bytes: Array(entropy))
+        let hash = Array(SHA256.hash(data: entropy))
         return (hash[0] >> (8 - size), size)
     }
 
@@ -443,16 +472,20 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
     public static func toSeed(mnemonic: String, passphrase: String = "") throws -> Data {
         let normalizedMnemonic = normalizeString(mnemonic)
         let normalizedPassphrase = normalizeString(passphrase)
-        let salt = "mnemonic" + normalizedPassphrase
+        let salt = bip39SaltPrefix + normalizedPassphrase
 
-        // Derive the key using PBKDF2
-        let derivedKey = try PBKDF2.derive(
-            type: .sha512,
-            password: Array(normalizedMnemonic.utf8),
-            salt: Array(salt.utf8)
+        // `unsafeUncheckedRounds` is required because BIP-39's 2048 rounds is below
+        // swift-crypto's recommended minimum of 210,000 — this iteration count is
+        // dictated by the spec and is not configurable.
+        let derivedKey = try KDF.Insecure.PBKDF2.deriveKey(
+            from: Array(normalizedMnemonic.utf8),
+            salt: Array(salt.utf8),
+            using: .sha512,
+            outputByteCount: bip39SeedByteCount,
+            unsafeUncheckedRounds: bip39PBKDF2Rounds
         )
 
-        return Data(derivedKey)
+        return derivedKey.withUnsafeBytes { Data($0) }
     }
 
     /// Derives a Base58Check-encoded extended private key (xprv/tprv) from a 64-byte seed.
@@ -466,18 +499,18 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
             throw MnemonicError.invalidSeedLength("Invalid seed length: \(seed.count)")
         }
         
-        let key = Array("Bitcoin seed".data(using: .utf8)!)
-        let seedHMAC = HMAC.authenticate(type: .sha512, key: key, data: seed)
+        let key = SymmetricKey(data: Data(bip32MasterKeyHMACKey.utf8))
+        let seedHMAC = Array(Crypto.HMAC<SHA512>.authenticationCode(for: seed, using: key))
 
-        var xprv = testnet ? Data([0x04, 0x35, 0x83, 0x94]) : Data([0x04, 0x88, 0xad, 0xe4])
+        var xprv = testnet ? bip32TestnetPrivateVersion : bip32MainnetPrivateVersion
         xprv.append(Data(repeating: 0, count: 9))
         xprv.append(Data(seedHMAC[32...]))
         xprv.append(Data([0x00]))
         xprv.append(Data(seedHMAC[..<32]))
-        
-        let hash = SHA2.hash(type: .sha256, bytes: Array(xprv))
-        let doubleHash = SHA2.hash(type: .sha256, bytes: hash)
-        
+
+        let hash = SHA256.hash(data: xprv)
+        let doubleHash = Array(SHA256.hash(data: Data(hash)))
+
         xprv.append(contentsOf: doubleHash.prefix(4))
 
         return xprv.base58EncodedString()
