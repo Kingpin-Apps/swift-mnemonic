@@ -1,3 +1,9 @@
+## 0.2.3 (2026-05-27)
+
+### Fix
+
+- replace UncommonCrypto with swift-crypto for WASM and Android support
+
 ## 0.2.2 (2026-04-11)
 
 ### Fix
