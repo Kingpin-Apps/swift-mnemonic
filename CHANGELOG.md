@@ -1,3 +1,9 @@
+## 0.2.6 (2026-10-29)
+
+### Fix
+
+- detect languages by checksum when wordlists share words
+
 ## 0.2.5 (2026-05-28)
 
 ### Fix
