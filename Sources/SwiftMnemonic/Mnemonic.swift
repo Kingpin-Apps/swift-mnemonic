@@ -185,15 +185,22 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
     /// - Parameter mnemonic: An array of mnemonic words to restore from.
     ///
     /// - Throws:
-    ///   - `MnemonicError.languageNotDetected`: If the language cannot be determined.
+    ///   - `MnemonicError.languageNotDetected`: If the language cannot be determined, or the phrase
+    ///     passes the checksum in more than one wordlist with different entropy.
     ///   - `MnemonicError.wordNotFound`: If any word is not found in the detected language's wordlist.
     ///   - `MnemonicError.failedChecksum`: If the mnemonic fails BIP-39 checksum validation.
     ///   - `MnemonicError.invalidWordlistLength`: If the phrase length is invalid (not 12, 15, 18, 21, or 24 words).
     ///
     /// - Note: This method performs full BIP-39 validation including checksum verification.
     public init(from mnemonic: [String]) throws {
-        let language = try Mnemonic.detectLanguage(phrase: mnemonic.joined(separator: " "))
-        try self.init(entropy: Self.toEntropy(mnemonic, wordlist: language.words()))
+        // The wordlists are stored NFKD-normalized, so normalize the input the
+        // same way (e.g. precomposed "é" or Japanese dakuten) before lookup.
+        let words = Self.splitWords(mnemonic.joined(separator: " "))
+        let language = try Mnemonic.detectLanguage(phrase: words.joined(separator: " "))
+        try self.init(
+            language: language,
+            entropy: Self.toEntropy(words, wordlist: language.words())
+        )
     }
 
     /// Returns the list of supported language identifiers.
@@ -212,39 +219,99 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
         return txt.decomposedStringWithCompatibilityMapping
     }
 
+    /// NFKD-normalizes a phrase and splits it into words on any whitespace.
+    ///
+    /// NFKD maps the Japanese ideographic space (U+3000) to a plain space, so
+    /// Japanese phrases split the same way as every other language.
+    static func splitWords(_ phrase: String) -> [String] {
+        return normalizeString(phrase)
+            .split(whereSeparator: { $0.isWhitespace })
+            .map { String($0) }
+    }
+
     /// Attempts to detect the mnemonic language from a space-separated phrase.
-    /// The detection first narrows candidates by prefix matches, then by exact matches.
+    ///
+    /// Detection works in two stages:
+    ///
+    /// 1. **Full phrases** (12, 15, 18, 21 or 24 words). Only languages whose
+    ///    wordlist holds every word exactly are candidates, and the BIP-39
+    ///    checksum decides between them:
+    ///    - If exactly one candidate passes the checksum, that is the language.
+    ///    - If several pass and all decode to the same entropy (simplified and
+    ///      traditional Chinese share many characters at the same wordlist
+    ///      index), the phrase is valid and the first passing language in
+    ///      `Language.allCases` order is returned, so simplified Chinese wins
+    ///      over traditional. Restoring with either gives the same entropy.
+    ///    - If several pass with *different* entropy, the phrase is truly
+    ///      ambiguous and `languageNotDetected` is thrown.
+    ///    - If no candidate passes but exactly one wordlist holds every word,
+    ///      that language is returned, so restoring reports the accurate
+    ///      `failedChecksum` from `toEntropy(_:wordlist:)`.
+    ///
+    /// 2. **Partial phrases**, or full phrases stage 1 could not settle. Words
+    ///    are treated as possible prefixes: candidates are narrowed to the
+    ///    languages with a word starting with each input word, then to the one
+    ///    language that alone holds some input word exactly.
+    ///
+    /// The phrase is NFKD-normalized first, matching the stored wordlists.
+    ///
     /// - Parameter phrase: The mnemonic phrase or partial phrase to analyze.
     /// - Returns: The detected `Language`.
     /// - Throws: `MnemonicError.languageNotDetected` if a unique language cannot be determined.
     public static func detectLanguage(phrase: String) throws -> Language {
-        let normalizedCode = Mnemonic.normalizeString(phrase)
-        var possibleLanguages = try listLanguages().map {
-            try Mnemonic(language: Language(rawValue: $0)!)
-        }
-        let words = Set(normalizedCode.split(separator: " ").map { String($0) })
+        let words = splitWords(phrase)
+        let wordlists: [(language: Language, words: [String])] = try Language.allCases
+            .filter { $0 != .unsupported }
+            .map { ($0, try $0.words()) }
 
-        for word in words {
-            possibleLanguages = possibleLanguages.filter { $0.wordlist.contains { $0.hasPrefix(word) } }
-            if possibleLanguages.isEmpty {
+        if [12, 15, 18, 21, 24].contains(words.count) {
+            let exact = wordlists.filter { candidate in
+                let lookup = Set(candidate.words)
+                return words.allSatisfy { lookup.contains($0) }
+            }
+            let passing = exact.compactMap { candidate -> (language: Language, entropy: Data)? in
+                guard let entropy = try? toEntropy(words, wordlist: candidate.words) else { return nil }
+                return (candidate.language, entropy)
+            }
+
+            if let first = passing.first {
+                guard passing.allSatisfy({ $0.entropy == first.entropy }) else {
+                    let names = passing.map { $0.language.rawValue }.joined(separator: ", ")
+                    throw MnemonicError.languageNotDetected(
+                        "Ambiguous mnemonic: the phrase passes the checksum in more than one wordlist "
+                            + "(\(names)) with different entropy")
+                }
+                return first.language
+            }
+
+            if exact.count == 1 {
+                return exact[0].language
+            }
+        }
+
+        var possible = wordlists
+        let uniqueWords = Set(words)
+        for word in uniqueWords {
+            possible = possible.filter { $0.words.contains { $0.hasPrefix(word) } }
+            if possible.isEmpty {
                 throw MnemonicError.languageNotDetected("Language not detected for phrase: \(phrase)")
             }
         }
 
-        if possibleLanguages.count == 1 {
-            return possibleLanguages.first!.language
+        if possible.count == 1 {
+            return possible[0].language
         }
 
-        var completeLanguages = Set<Mnemonic>()
-        for word in words {
-            let exactMatches = possibleLanguages.filter { $0.wordlist.contains(word) }
+        var complete = Set<Language>()
+        for word in uniqueWords {
+            let exactMatches = possible.filter { $0.words.contains(word) }
             if exactMatches.count == 1 {
-                completeLanguages.formUnion(exactMatches)
+                complete.insert(exactMatches[0].language)
             }
         }
 
-        if completeLanguages.count == 1 {
-            return completeLanguages.first!.language
+        if complete.count == 1 {
+            return complete.first!
         }
 
         throw MnemonicError.languageNotDetected("Language not detected for phrase: \(phrase)")
