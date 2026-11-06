@@ -19,7 +19,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "4.5.0"),
-        .package(url: "https://github.com/Kingpin-Apps/swift-base58.git", from: "0.1.4")
+        .package(url: "https://github.com/Kingpin-Apps/swift-base58.git", from: "0.1.5")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
