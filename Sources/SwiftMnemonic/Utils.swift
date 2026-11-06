@@ -5,14 +5,29 @@ import SwiftBase58
 public extension Data {
     
     /// Initialize Data from a hexadecimal string.
-    init(fromHex: String) {
-        self.init()
-        var hex = fromHex
-        while hex.count > 0 {
-            let c = String(hex.prefix(2))
-            hex = String(hex.dropFirst(2))
-            self.append(UInt8(c, radix: 16)!)
+    /// - Throws: `MnemonicError.invalidHex` if the string has odd length or a character outside `[0-9a-fA-F]`.
+    init(fromHex hex: String) throws {
+        let utf8 = Array(hex.utf8)
+        guard utf8.count % 2 == 0 else {
+            throw MnemonicError.invalidHex("Hex string has odd length: \(utf8.count)")
         }
+        func nibble(_ c: UInt8) -> UInt8? {
+            switch c {
+            case 0x30...0x39: return c - 0x30
+            case 0x41...0x46: return c - 0x37
+            case 0x61...0x66: return c - 0x57
+            default: return nil
+            }
+        }
+        var bytes = [UInt8]()
+        bytes.reserveCapacity(utf8.count / 2)
+        for i in stride(from: 0, to: utf8.count, by: 2) {
+            guard let hi = nibble(utf8[i]), let lo = nibble(utf8[i + 1]) else {
+                throw MnemonicError.invalidHex("Invalid hex character at offset \(i)")
+            }
+            bytes.append(hi << 4 | lo)
+        }
+        self.init(bytes)
     }
 
     /// Encode the given bytes to a Base58 encoded string.

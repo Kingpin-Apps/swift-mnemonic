@@ -167,7 +167,7 @@ print("Master keys are different: \(defaultMaster != passphraseMaster)") // true
 func validateSeedDerivation(mnemonic: String, expectedSeed: String) -> Bool {
     do {
         let derivedSeed = try Mnemonic.toSeed(mnemonic: mnemonic)
-        let expectedData = Data(fromHex: expectedSeed)
+        let expectedData = try Data(fromHex: expectedSeed)
         
         return derivedSeed == expectedData
     } catch {

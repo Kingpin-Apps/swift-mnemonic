@@ -25,7 +25,7 @@ import SwiftMnemonic
 
 // Create entropy from hex string
 let entropyHex = "0123456789abcdef0123456789abcdef"
-let entropyData = Data(fromHex: entropyHex)
+let entropyData = try Data(fromHex: entropyHex)
 
 let mnemonic = try Mnemonic(language: .english)
 
@@ -52,7 +52,7 @@ let entropyData = Data(recoveredEntropy)
 print("Recovered entropy: \(entropyData.hexEncodedString())")
 
 // Verify round-trip conversion
-let originalEntropy = Data(fromHex: "00000000000000000000000000000000")
+let originalEntropy = try Data(fromHex: "00000000000000000000000000000000")
 let roundTripPhrase = try mnemonic.toMnemonic(entropy: originalEntropy)
 let roundTripEntropy = try mnemonic.toEntropy(roundTripPhrase, wordlist: mnemonic.wordlist)
 
@@ -167,7 +167,7 @@ func demonstrateChecksumMechanism() throws {
     let mnemonic = try Mnemonic(language: .english)
     
     // Example with 128-bit entropy (16 bytes -> 12 words)
-    let entropy = Data(fromHex: "00000000000000000000000000000000")
+    let entropy = try Data(fromHex: "00000000000000000000000000000000")
     
     // Calculate checksum using the library's method
     let (checksum, checksumBits) = try Mnemonic.calculateChecksumBits(entropy)
@@ -317,7 +317,7 @@ extension Data {
 }
 
 // Examples of entropy from different formats
-let hexEntropy = Data(fromHex: "deadbeefcafebabe0123456789abcdef")
+let hexEntropy = try Data(fromHex: "deadbeefcafebabe0123456789abcdef")
 let binaryEntropy = Data(binaryString: "11011110 10101101 10111110 11101111")
 let base64Entropy = Data(base64: "3q2+78r+uvgBI0eJq7zv")
 

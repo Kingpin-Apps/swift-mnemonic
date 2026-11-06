@@ -10,7 +10,7 @@ struct LanguageDetectionTests {
 
     /// A random simplified-Chinese phrase whose every word is also in the
     /// traditional-Chinese wordlist (found after 241 random entropies).
-    static let sharedChineseEntropy = Data(fromHex: "6ac7381b0b16b4118fb84dacd5d9322e")
+    static let sharedChineseEntropy = try! Data(fromHex: "6ac7381b0b16b4118fb84dacd5d9322e")
 
     @Test("Shared simplified/traditional Chinese phrase is detected by checksum")
     func testSharedChinesePhrase() throws {
@@ -45,7 +45,7 @@ struct LanguageDetectionTests {
         #expect(try Mnemonic.detectLanguage(phrase: words) == .english)
         let restored = try Mnemonic(from: words.components(separatedBy: " "))
         #expect(restored.language == .english)
-        #expect(restored.entropy == Data(fromHex: "c42421772724d5e90230da5c71ae56aa"))
+        #expect(try restored.entropy == Data(fromHex: "c42421772724d5e90230da5c71ae56aa"))
     }
 
     @Test("Phrase valid in two wordlists with different entropy is ambiguous")
@@ -91,7 +91,7 @@ struct LanguageDetectionTests {
             let language = try #require(Language(rawValue: lang))
             for vector in vectors {
                 let restored = try Mnemonic(from: vector[1].components(separatedBy: " "))
-                #expect(restored.entropy == Data(fromHex: vector[0]), "\(lang): \(vector[1])")
+                #expect(try restored.entropy == Data(fromHex: vector[0]), "\(lang): \(vector[1])")
                 // A traditional-Chinese vector may consist only of characters
                 // shared with simplified Chinese; then simplified is reported.
                 if restored.language != language {

@@ -6,6 +6,7 @@ public enum MnemonicError: Error, Equatable {
     case failedChecksum(String?)
     case fileNotFound(String?)
     case fileLoadFail(String?)
+    case invalidHex(String?)
     case invalidEntropy(String?)
     case invalidSeedLength(String?)
     case invalidStrengthValue(String?)
