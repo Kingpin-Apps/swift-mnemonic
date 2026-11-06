@@ -1,3 +1,13 @@
+## 0.3.0 (2026-11-06)
+
+### Feat
+
+- throw on malformed hex in Data(fromHex:)
+
+### Fix
+
+- redact mnemonic words from error messages
+
 ## 0.2.7 (2026-11-06)
 
 ## 0.2.6 (2026-10-29)
