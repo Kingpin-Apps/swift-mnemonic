@@ -35,7 +35,7 @@ Add SwiftMnemonic as a dependency in your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Kingpin-Apps/swift-mnemonic.git", from: "1.0.0")
+    .package(url: "https://github.com/Kingpin-Apps/swift-mnemonic.git", from: "0.3.0")
 ],
 targets: [
     .target(
@@ -130,7 +130,7 @@ print("Is invalid: \(isInvalid)") // false
 ```swift
 // Create entropy from hex string (16 bytes = 128-bit entropy for 12 words)
 let entropyHex = "0123456789abcdef0123456789abcdef"
-let entropyData = Data(entropyHex.hexStringToData())
+let entropyData = try Data(fromHex: entropyHex) // throws MnemonicError.invalidHex on malformed input
 
 // Create mnemonic from specific entropy
 let mnemonic = try Mnemonic(language: .english, entropy: entropyData)
@@ -240,10 +240,14 @@ do {
     print("Checksum validation failed: \(message)")
 } catch MnemonicError.wordNotFound(let message) {
     print("Word not found: \(message)")
+} catch MnemonicError.invalidHex(let message) {
+    print("Invalid hex: \(message)")
 } catch {
     print("Other error: \(error)")
 }
 ```
+
+Error messages never include mnemonic words: restore and validation errors report only the word count or the position of an unrecognized word, so they are safe to log. Still avoid logging the phrase, entropy or seed yourself.
 
 ### Complete Example: Wallet Setup
 
@@ -346,8 +350,8 @@ seed.resetBytes(in: seed.startIndex..<seed.endIndex)
 
 ## Dependencies
 
-- **[UncommonCrypto](https://github.com/tesseract-one/UncommonCrypto.swift)**: Provides cryptographic functions (SHA2, HMAC, PBKDF2)
-- **[SwiftBase58](https://github.com/KINGH242/swift-base58)**: Base58 encoding for extended keys
+- **[swift-crypto](https://github.com/apple/swift-crypto)**: SHA-256, HMAC-SHA512 and the CSPRNG (PBKDF2 is implemented in-package for WebAssembly support)
+- **[SwiftBase58](https://github.com/Kingpin-Apps/swift-base58)**: Base58 encoding for extended keys
 
 ## Testing
 

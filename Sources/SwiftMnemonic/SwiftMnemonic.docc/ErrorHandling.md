@@ -15,6 +15,7 @@ public enum MnemonicError: Error, Equatable {
     case failedChecksum(String?)
     case fileNotFound(String?)
     case fileLoadFail(String?)
+    case invalidHex(String?)
     case invalidEntropy(String?)
     case invalidSeedLength(String?)
     case invalidStrengthValue(String?)
@@ -64,6 +65,7 @@ handleBasicErrors()
 3. **Log Appropriately**: Use proper logging levels for different error types
 4. **Recovery Strategies**: Implement recovery for recoverable errors
 5. **User-Friendly Messages**: Translate technical errors into user-friendly language
+6. **Never Log Secrets**: `MnemonicError` messages never contain mnemonic words. `languageNotDetected` reports only the word count, and `wordNotFound` reports only the 1-based position of the unrecognized word, so error descriptions are safe to log. Never log the phrase, entropy, passphrase or seed yourself.
 
 
 
