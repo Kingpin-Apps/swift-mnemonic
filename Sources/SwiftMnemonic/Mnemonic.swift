@@ -294,7 +294,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
         for word in uniqueWords {
             possible = possible.filter { $0.words.contains { $0.hasPrefix(word) } }
             if possible.isEmpty {
-                throw MnemonicError.languageNotDetected("Language not detected for phrase: \(phrase)")
+                throw MnemonicError.languageNotDetected("Language not detected for \(words.count)-word phrase")
             }
         }
 
@@ -314,7 +314,7 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
             return complete.first!
         }
 
-        throw MnemonicError.languageNotDetected("Language not detected for phrase: \(phrase)")
+        throw MnemonicError.languageNotDetected("Language not detected for \(words.count)-word phrase")
     }
 
     /// Generates a new mnemonic phrase using cryptographically secure random entropy.
@@ -351,9 +351,9 @@ public struct Mnemonic: Equatable, Hashable, Sendable {
 
         // Convert words to a concatenated bit representation
         var concatBits = [Bool]()
-        for word in phrase {
+        for (position, word) in phrase.enumerated() {
             guard let index = wordlist.firstIndex(of: word) else {
-                throw MnemonicError.wordNotFound("Word not found in wordlist: \(word)")
+                throw MnemonicError.wordNotFound("Word not found in wordlist at position \(position + 1)")
             }
 
             // Convert index to an 11-bit binary representation
